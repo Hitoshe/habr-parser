@@ -1,0 +1,1 @@
+POST http://localhost:8080/api/parser/parse?url=https://habr.com/ru/news/1025360/

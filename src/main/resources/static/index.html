@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Habr to Markdown</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        button { width: 100%; padding: 12px; background: #5d5fef; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; }
+        button:hover { background: #4a4cd8; }
+        #status { margin-top: 15px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Habr ➜ Markdown</h1>
+    <input type="text" id="urlInput" placeholder="Ссылка на статью Хабра">
+
+    <div style="text-align: left; margin-bottom: 5px;">
+        <label style="font-size: 12px; color: #888;">Сколько комментариев спарсить?</label>
+    </div>
+    <select id="commentLimit">
+        <option value="0">Без комментариев</option>
+        <option value="5">Топ 5</option>
+        <option value="10">Топ 10</option>
+        <option value="30">Топ 30</option>
+    </select>
+
+    <button onclick="process()">Скачать .md файл</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    async function process() {
+        const url = document.getElementById('urlInput').value;
+        const limit = document.getElementById('commentLimit').value;
+        const status = document.getElementById('status');
+
+        if(!url) return alert("Вставь ссылку!");
+
+        status.innerText = "Работаем...";
+
+        try {
+            const res = await fetch(`/api/parser/parse?url=${encodeURIComponent(url)}&commentLimit=${limit}`, {
+                method: 'POST'
+            });
+            const article = await res.json();
+
+            status.innerText = "Статья спарсена! Начинаем загрузку...";
+            window.location.href = `/api/parser/download/${article.id}`;
+        } catch (e) {
+            status.innerText = "Ошибка. Проверь консоль.";
+        }
+    }
+</script>
+</body>
+</html>

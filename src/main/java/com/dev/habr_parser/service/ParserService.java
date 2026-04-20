@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
-import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -28,7 +27,6 @@ public class ParserService {
                 throw new IllegalArgumentException("Поддерживаются только ссылки на Habr.com");
             }
 
-            // 1. Загружаем HTML статьи
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                     .timeout(10000)
@@ -36,11 +34,9 @@ public class ParserService {
 
             String title = doc.select("h1").text();
 
-            // 2. Ищем главный контейнер контента (учитываем разные верстки Хабра)
             Element body = doc.selectFirst(".article-formatted-body, .tm-article-body, #post-content-body");
             String markdownContent = (body != null) ? nodesToMarkdown(body) : "*Контент не найден*";
 
-            // 3. Собираем метаданные для Obsidian (Frontmatter)
             String frontmatter = "----- \n" +
                     "title: \"" + title.replace("\"", "'") + "\"\n" +
                     "url: " + url + "\n" +
@@ -51,7 +47,6 @@ public class ParserService {
             StringBuilder result = new StringBuilder();
             result.append(frontmatter).append("# ").append(title).append("\n\n");
 
-            // Ищем главную картинку (Lead Image), если она есть
             Element leadImg = doc.selectFirst(".tm-article-presenter__lead-image img, .tm-article-snippet__lead-image img");
             if (leadImg != null) {
                 String src = leadImg.attr("abs:src").isEmpty() ? leadImg.attr("abs:data-src") : leadImg.attr("abs:src");
@@ -60,7 +55,6 @@ public class ParserService {
 
             result.append(markdownContent);
 
-            // 4. Добавляем комментарии через API
             if (commentLimit > 0) {
                 result.append(fetchCommentsViaApi(url, commentLimit));
             }
